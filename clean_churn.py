@@ -37,12 +37,18 @@ def main():
                     'Bandwidth_GB_Year'
                     ]
 
+    def impute_mean(df, column):
+        """
+        Takes a dataframe and column name and returns
+        a dataframe with imputed values
+        """
+        mean_imputer = SimpleImputer(strategy='mean')
+        df[column] = mean_imputer.fit_transform(df[column].values.reshape(-1,1))
+        return df
+
     # loop over missing columns
     for col in missing_columns_num:
         dfx = impute_mean(dfx, col)
-
-    # fill the missing values of the categorical columns with 'Unknown'
-    dfx = dfx.fillna('Unknown')
 
     # cast column values to their correct data types
     dfx['Zip'] = dfx['Zip'].astype(str)
@@ -62,9 +68,18 @@ def main():
     # finding upper and lower whiskers
     upper_bound = q3+(1.5*iqr)
     lower_bound = q1-(1.5*iqr)
-    
+
     # filter only rows with values below the upper bound and above the lower_bound
-    dfx = dfx[(dfx["MonthlyCharge"] < upper_bound) & (dfx["MonthlyCharge"] > lower_bound)]    
+    dfx = dfx[(dfx["MonthlyCharge"] < upper_bound) & (dfx["MonthlyCharge"] > lower_bound)]
+
+    # fill missing values with the most frequent values of the column (mode)
+    dfx =  dfx.fillna(value={'Techie':'No',
+                            'InternetService':'Fiber Optic',
+                            'Phone':'Yes',
+                            'TechSupport':'No'
+                            })
+
+
 
     dfx.to_csv('churn_cleaned_data_executable.csv', index=False)
     print('Dataframe shape: ' + str(dfx.shape))
